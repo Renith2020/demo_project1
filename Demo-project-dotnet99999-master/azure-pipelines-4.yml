@@ -1,0 +1,43 @@
+# File: azure-pipelines.yml
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '6.x'
+
+    - script: |
+        dotnet build --configuration $(buildConfiguration)
+      displayName: 'Build Solution'
+
+- stage: Test
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    steps:
+    - script: |
+        dotnet test --configuration $(buildConfiguration)
+      displayName: 'Run Tests'
+
+- stage: Deploy
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: DeployJob
+    steps:
+    - script: echo "Deploying the application..."
+      displayName: 'Deploy to Production'
